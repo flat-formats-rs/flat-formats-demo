@@ -36,14 +36,6 @@ tempfile = "3.17.1"
 anyhow = "1.0.104"
 hldemo = "0.3.0"
 
-[patch."https://github.com/ulquiorracode/silicon-kit-rs.git"]
-silicon-kit = { path = "../../silicon-kit-rs" }
-
-[patch."https://github.com/ulquiorracode/odd-int-rs.git"]
-odd-int = { path = "../../odd-int-rs" }
-
-[patch."https://github.com/ulquiorracode/narrow-ptr-rs.git"]
-narrow-ptr = { path = "../../narrow-ptr-rs" }
 
 [profile.release]
 opt-level = 3
