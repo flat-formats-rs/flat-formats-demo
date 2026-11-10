@@ -1,0 +1,56 @@
+[workspace]
+members = [
+    "core/flatdemo-core",
+    "adapters/flatdemo-adapter-goldsrc",
+    "cli/flatdemo-cli",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+authors = ["ulquiorracode <contact@ulquiorra.dev>"]
+license = "MIT"
+repository = "https://github.com/flat-formats-rs/flat-formats-demo"
+homepage = "https://github.com/flat-formats-rs/flat-formats-demo"
+
+[workspace.dependencies]
+flatdemo-core = { path = "core/flatdemo-core", version = "0.1.0" }
+flatdemo-adapter-goldsrc = { path = "adapters/flatdemo-adapter-goldsrc", version = "0.1.0" }
+
+# In-ecosystem crates
+silicon-kit = { path = "../../silicon-kit-rs", version = "0.1.0", default-features = false, features = ["bits", "snorm", "f16c", "zerocopy", "streaming"] }
+odd-int = { git = "https://github.com/ulquiorracode/odd-int-rs.git", branch = "dev", default-features = false, features = ["zerocopy"] }
+narrow-ptr = { git = "https://github.com/ulquiorracode/narrow-ptr-rs.git", branch = "dev", default-features = false, features = ["odd-int", "zerocopy"] }
+
+# High-performance systems pack
+zerocopy = { version = "0.8", default-features = false, features = ["derive"] }
+blake3 = { version = "1.8", default-features = false }
+memmap2 = "0.9"
+memchr = "2.7"
+thiserror = "2.0"
+rayon = "1.10"
+clap = { version = "4.5", features = ["derive"] }
+anyhow = "1.0"
+zstd = "0.14"
+tempfile = "3.17"
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.5"
+hldemo = "0.3.0"
+
+[patch."https://github.com/ulquiorracode/odd-int-rs.git"]
+odd-int = { path = "../../odd-int-rs" }
+
+[patch."https://github.com/ulquiorracode/narrow-ptr-rs.git"]
+narrow-ptr = { path = "../../narrow-ptr-rs" }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+[profile.bench]
+opt-level = 3
+lto = "thin"
+codegen-units = 1

@@ -1,0 +1,32 @@
+[package]
+name = "flatdemo-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+silicon-kit = { workspace = true }
+odd-int = { workspace = true }
+narrow-ptr = { workspace = true }
+zerocopy = { workspace = true }
+blake3 = { workspace = true, optional = true }
+zstd = { workspace = true, optional = true }
+thiserror = { workspace = true }
+
+[features]
+default = ["std", "blake3", "zstd"]
+std = ["zerocopy/std"]
+blake3 = ["dep:blake3"]
+zstd = ["dep:zstd"]
+
+[dev-dependencies]
+criterion = { workspace = true }
+
+[[bench]]
+name = "seek_bench"
+harness = false
+

@@ -1,0 +1,20 @@
+[package]
+name = "flatdemo-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[[bin]]
+name = "fld"
+path = "src/main.rs"
+
+[dependencies]
+flatdemo-core = { workspace = true }
+flatdemo-adapter-goldsrc = { workspace = true }
+clap = { workspace = true }
+anyhow = { workspace = true }
+memmap2 = { workspace = true }
