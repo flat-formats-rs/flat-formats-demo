@@ -139,7 +139,7 @@ impl<'a> FlatDemoView<'a> {
     pub fn decompressed_block_payload(
         &self,
         block_idx: usize,
-    ) -> Result<std::borrow::Cow<'a, [u8]>, FlatDemoError> {
+    ) -> Result<alloc::borrow::Cow<'a, [u8]>, FlatDemoError> {
         let block = &self.seek_table[block_idx];
         let raw = self.block_payload(block);
 
@@ -147,9 +147,9 @@ impl<'a> FlatDemoView<'a> {
         if block.compressed_size != block.uncompressed_size {
             let decompressed = zstd::decode_all(raw)
                 .map_err(|_| FlatDemoError::DecompressionFailed { block_idx })?;
-            return Ok(std::borrow::Cow::Owned(decompressed));
+            return Ok(alloc::borrow::Cow::Owned(decompressed));
         }
 
-        Ok(std::borrow::Cow::Borrowed(raw))
+        Ok(alloc::borrow::Cow::Borrowed(raw))
     }
 }

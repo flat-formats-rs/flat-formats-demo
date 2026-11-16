@@ -1,6 +1,6 @@
 //! FlatDemo (.fld) Container Builder.
 
-use std::vec::Vec;
+use alloc::vec::Vec;
 use zerocopy::IntoBytes;
 
 use crate::header::{

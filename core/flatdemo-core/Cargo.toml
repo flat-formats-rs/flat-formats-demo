@@ -18,7 +18,8 @@ zstd = { workspace = true, optional = true }
 thiserror = { workspace = true }
 
 [features]
-default = ["std", "blake3", "zstd"]
+default = ["std", "blake3", "zstd", "builder"]
+builder = ["dep:blake3"]
 std = ["zerocopy/std"]
 blake3 = ["dep:blake3"]
 zstd = ["dep:zstd"]
