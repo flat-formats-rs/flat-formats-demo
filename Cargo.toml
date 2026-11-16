@@ -7,7 +7,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.85"
 authors = ["ulquiorracode <contact@ulquiorra.dev>"]
@@ -16,8 +16,8 @@ repository = "https://github.com/flat-formats-rs/flat-formats-demo"
 homepage = "https://github.com/flat-formats-rs/flat-formats-demo"
 
 [workspace.dependencies]
-flatdemo-core = { path = "core/flatdemo-core", version = "0.1.0" }
-flatdemo-adapter-goldsrc = { path = "adapters/flatdemo-adapter-goldsrc", version = "0.1.0" }
+flatdemo-core = { path = "core/flatdemo-core", version = "0.2.0" }
+flatdemo-adapter-goldsrc = { path = "adapters/flatdemo-adapter-goldsrc", version = "0.2.0" }
 
 # In-ecosystem crates
 silicon-kit = { git = "https://github.com/ulquiorracode/silicon-kit-rs.git", branch = "dev", default-features = false, features = ["bits", "snorm", "f16c", "zerocopy", "streaming"] }
