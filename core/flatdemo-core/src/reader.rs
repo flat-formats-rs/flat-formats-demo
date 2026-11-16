@@ -21,6 +21,17 @@ pub enum FlatDemoError {
         size: usize,
         total: usize,
     },
+    #[error(
+        "Corrupted seek table: block {index} offset {offset} + size {size} out of bounds for total {total}"
+    )]
+    SeekBlockOutOfBounds {
+        index: usize,
+        offset: u64,
+        size: u32,
+        total: usize,
+    },
+    #[error("Calculation overflow in block bounds check")]
+    ArithmeticOverflow,
     #[error("Requested tick {tick} exceeds total demo ticks {total_ticks}")]
     TickOutOfBounds { tick: u64, total_ticks: u64 },
     #[error("Decompression failed on block {block_idx}")]
@@ -59,9 +70,13 @@ impl<'a> FlatDemoView<'a> {
         }
 
         let block_count = header.block_count as usize;
-        let seek_table_size = block_count * core::mem::size_of::<SeekBlockDesc>();
+        let seek_table_size = block_count
+            .checked_mul(core::mem::size_of::<SeekBlockDesc>())
+            .ok_or(FlatDemoError::ArithmeticOverflow)?;
         let table_start = header.seek_table_offset as usize;
-        let table_end = table_start + seek_table_size;
+        let table_end = table_start
+            .checked_add(seek_table_size)
+            .ok_or(FlatDemoError::ArithmeticOverflow)?;
 
         if table_end > bytes.len() {
             return Err(FlatDemoError::SeekTableOutOfBounds {
@@ -80,6 +95,32 @@ impl<'a> FlatDemoView<'a> {
             size: seek_table_size,
             total: bytes.len(),
         })?;
+
+        // Scrooge & Fail-Fast: strictly validate every seek block descriptor bounds upfront
+        for (i, block) in seek_table.iter().enumerate() {
+            let offset = usize::try_from(block.file_offset).map_err(|_| {
+                FlatDemoError::SeekBlockOutOfBounds {
+                    index: i,
+                    offset: block.file_offset,
+                    size: block.compressed_size,
+                    total: bytes.len(),
+                }
+            })?;
+            let size = usize::try_from(block.compressed_size)
+                .map_err(|_| FlatDemoError::ArithmeticOverflow)?;
+            let end = offset
+                .checked_add(size)
+                .ok_or(FlatDemoError::ArithmeticOverflow)?;
+
+            if end > bytes.len() {
+                return Err(FlatDemoError::SeekBlockOutOfBounds {
+                    index: i,
+                    offset: block.file_offset,
+                    size: block.compressed_size,
+                    total: bytes.len(),
+                });
+            }
+        }
 
         Ok(Self {
             raw_bytes: bytes,
@@ -128,11 +169,40 @@ impl<'a> FlatDemoView<'a> {
     }
 
     /// Fetches the raw byte payload of a seek block.
+    ///
+    /// # Panics
+    /// Panics if the block is out of bounds, which cannot happen for blocks belonging
+    /// to this view's seek table as they are validated upon [`FlatDemoView::new`].
     #[inline]
     pub fn block_payload(&self, block: &SeekBlockDesc) -> &'a [u8] {
-        let start = block.file_offset as usize;
-        let end = start + block.compressed_size as usize;
+        let start = usize::try_from(block.file_offset).expect("file_offset out of usize range");
+        let size =
+            usize::try_from(block.compressed_size).expect("compressed_size out of usize range");
+        let end = start
+            .checked_add(size)
+            .expect("file_offset + compressed_size overflow");
         &self.raw_bytes[start..end]
+    }
+
+    /// Safely fetches the raw byte payload of a seek block, validating bounds against raw bytes.
+    #[inline]
+    pub fn try_block_payload(&self, block: &SeekBlockDesc) -> Result<&'a [u8], FlatDemoError> {
+        let start =
+            usize::try_from(block.file_offset).map_err(|_| FlatDemoError::ArithmeticOverflow)?;
+        let size = usize::try_from(block.compressed_size)
+            .map_err(|_| FlatDemoError::ArithmeticOverflow)?;
+        let end = start
+            .checked_add(size)
+            .ok_or(FlatDemoError::ArithmeticOverflow)?;
+        if end > self.raw_bytes.len() {
+            return Err(FlatDemoError::SeekBlockOutOfBounds {
+                index: usize::MAX,
+                offset: block.file_offset,
+                size: block.compressed_size,
+                total: self.raw_bytes.len(),
+            });
+        }
+        Ok(&self.raw_bytes[start..end])
     }
 
     /// Decompresses block payload if compressed via Zstd.

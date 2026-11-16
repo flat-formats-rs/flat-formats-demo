@@ -71,4 +71,33 @@ fn test_flatdemo_roundtrip_and_o1_seek() {
         64 * (core::mem::size_of::<EntityTransformRecord>()
             + core::mem::size_of::<SubTickUserCmd>())
     );
+
+    // Test try_block_payload
+    let raw_payload = view
+        .try_block_payload(desc350)
+        .expect("Payload access failed");
+    assert_eq!(raw_payload.len(), desc350.compressed_size as usize);
+}
+
+#[test]
+fn test_flatdemo_corrupted_seek_table_bounds() {
+    let tickrate = 128;
+    let mut builder = FlatDemoBuilder::new(tickrate);
+    let sample = [1u8; 100];
+    builder.add_block(&sample, 0, false);
+    let mut fld_bytes = builder.build();
+
+    let view = FlatDemoView::new(&fld_bytes).expect("Valid view");
+    let seek_table_offset = view.header().seek_table_offset as usize;
+    // SeekBlockDesc layout: start_tick(u64), file_offset(u64), compressed_size(u32), ...
+    // file_offset is at offset 8 within SeekBlockDesc in the seek table
+    let offset_pos = seek_table_offset + 8;
+    let bad_offset = 999999u64.to_le_bytes();
+    fld_bytes[offset_pos..offset_pos + 8].copy_from_slice(&bad_offset);
+
+    let view_res = FlatDemoView::new(&fld_bytes);
+    assert!(matches!(
+        view_res,
+        Err(flatdemo_core::FlatDemoError::SeekBlockOutOfBounds { .. })
+    ));
 }
