@@ -32,6 +32,8 @@ pub enum FlatDemoError {
     },
     #[error("Calculation overflow in block bounds check")]
     ArithmeticOverflow,
+    #[error("Block index {index} out of bounds for seek table of length {total_blocks}")]
+    BlockIndexOutOfBounds { index: usize, total_blocks: usize },
     #[error("Requested tick {tick} exceeds total demo ticks {total_ticks}")]
     TickOutOfBounds { tick: u64, total_ticks: u64 },
     #[error("Decompression failed on block {block_idx}")]
@@ -210,8 +212,14 @@ impl<'a> FlatDemoView<'a> {
         &self,
         block_idx: usize,
     ) -> Result<alloc::borrow::Cow<'a, [u8]>, FlatDemoError> {
-        let block = &self.seek_table[block_idx];
-        let raw = self.block_payload(block);
+        let block = self
+            .seek_table
+            .get(block_idx)
+            .ok_or(FlatDemoError::BlockIndexOutOfBounds {
+                index: block_idx,
+                total_blocks: self.seek_table.len(),
+            })?;
+        let raw = self.try_block_payload(block)?;
 
         #[cfg(feature = "zstd")]
         if block.compressed_size != block.uncompressed_size {

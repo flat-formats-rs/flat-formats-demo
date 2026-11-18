@@ -1,5 +1,5 @@
 use flatdemo_core::{
-    FlatDemoBuilder, FlatDemoView,
+    FlatDemoBuilder, FlatDemoError, FlatDemoView,
     state::{EntityTransformRecord, SubTickUserCmd},
 };
 
@@ -77,6 +77,10 @@ fn test_flatdemo_roundtrip_and_o1_seek() {
         .try_block_payload(desc350)
         .expect("Payload access failed");
     assert_eq!(raw_payload.len(), desc350.compressed_size as usize);
+
+    // Test out of bounds decompressed_block_payload
+    let err = view.decompressed_block_payload(99999).unwrap_err();
+    assert!(matches!(err, FlatDemoError::BlockIndexOutOfBounds { .. }));
 }
 
 #[test]
